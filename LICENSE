@@ -22,10 +22,6 @@ ambiguity between the two texts, the Korean text shall prevail.
 본 프로젝트는 경기도 광명시에 사는 한 시민이 만든 프로젝트입니다.
 생성형 AI 도구와 함께 만들었고, 오픈소스가 좋아서, 그리고 제가 사는 동네가 좋아서 시작했습니다.
 
-conductor는 AI 코딩 에이전트가 프로젝트를 처음부터 끝까지 오케스트레이션할 수 있도록
-돕는 Agent Skill 컬렉션입니다. 소프트웨어 개발뿐 아니라, 전자책, 사업계획서, 제안서 등
-어떤 프로젝트든 AI와 함께 시작할 수 있도록 안내합니다.
-
 GM-Social 라이선스는 오픈소스 철학을 따릅니다. 마음껏 쓰고, 뜯어보고, 고치고, 나누세요.
 다만 하나, 다른 라이선스에는 없는 조건이 있습니다 —
 
@@ -38,7 +34,7 @@ GM-Social 라이선스는 오픈소스 철학을 따릅니다. 마음껏 쓰고,
 제1조 정의
 
   "라이선스" — 이 GM-Social 라이선스 v1.0 문서 자체.
-  "소프트웨어" — 이 라이선스가 적용되는 conductor의 소스 코드, SKILL.md 파일, 빌드 스크립트, 문서, 생성 파일(AGENTS.md, CLAUDE.md) 일체.
+  "소프트웨어" — 이 라이선스가 적용되는 sme-web-service의 소스 코드, HTML/CSS/JavaScript 파일, 빌드 스크립트, 문서, 설정 파일 일체.
   "라이선서" — 이인희 / 파란두루미(Parandurume Inc.).
   "기여자" — 소프트웨어에 코드나 문서 등을 보탠 사람 또는 단체. 개발에 활용된 생성형 AI 시스템도 여기에 포함.
   "사용자" — 이 라이선스에 따라 권리를 행사하는 개인이나 법인.
@@ -70,10 +66,10 @@ GM-Social 라이선스는 오픈소스 철학을 따릅니다. 마음껏 쓰고,
     (가) 소프트웨어를 복사하거나 상당 부분을 가져다 쓸 때, 이 라이선스 파일과 저작권 표시를 그대로 남겨두세요.
     (나) 원 저작자를 밝혀주세요:
            - 이인희 / 파란두루미
-           - conductor 프로젝트와 기여자들
+           - sme-web-service 프로젝트와 기여자들
     (다) 원본에서 뭘 바꿨는지 표시해주세요.
     (라) 파생 저작물을 배포할 때는 원본 저장소 링크를 넣어주세요.
-    (마) "파란두루미", "Parandurume", "conductor" 이름은 저작자 표시 외의 용도(보증·홍보 등)로 쓰려면 사전에 서면 동의를 받아야 합니다.
+    (마) "파란두루미", "Parandurume", "sme-web-service" 이름은 저작자 표시 외의 용도(보증·홍보 등)로 쓰려면 사전에 서면 동의를 받아야 합니다.
 
   3.2 사회적 감사 — 광명에 감사를 (이 라이선스의 핵심)
 
@@ -216,9 +212,9 @@ This software was made by a citizen of Gwangmyeong, Gyeonggi-do, South Korea.
 It was built with generative AI tools, because the author loves open source
 and loves the city where they live.
 
-conductor is an Agent Skill collection that helps AI coding agents orchestrate
-projects from start to finish — not just software, but e-books, business plans,
-proposals, and any creative or technical endeavor.
+sme-web-service is a website template for small and medium-sized businesses,
+designed to help local businesses establish their online presence quickly and
+affordably.
 
 The GM-Social License follows the open-source philosophy: use it freely, take
 it apart, fix it, share it. But there's one condition you won't find in any
@@ -230,8 +226,8 @@ That's the only price.
 1. DEFINITIONS
 
   "License" — This GM-Social License v1.0 document itself.
-  "Software" — The conductor source code, SKILL.md files, build scripts,
-    documentation, and generated files (AGENTS.md, CLAUDE.md) covered by
+  "Software" — The sme-web-service source code, HTML/CSS/JavaScript files,
+    build scripts, documentation, and configuration files covered by
     this License.
   "Licensor" — LEE Inhee (이인희) / Parandurume Inc. (파란두루미).
   "Contributors" — Anyone who has added code, documentation, or other materials
@@ -270,11 +266,11 @@ These rights last for the full duration of copyright under applicable law.
         License file and all copyright notices intact.
     (b) Give credit to:
           - LEE Inhee (이인희) / Parandurume Inc. — the original creator
-          - The conductor project and its contributors
+          - The sme-web-service project and its contributors
     (c) If you changed something, say so.
     (d) When distributing Derivative Works, include a link to the original
         repository.
-    (e) Don't use "Parandurume", "파란두루미", or "conductor" for endorsement
+    (e) Don't use "Parandurume", "파란두루미", or "sme-web-service" for endorsement
         or promotion without written permission. Attribution is fine.
 
   3.2 SOCIAL GRATITUDE — 광명에 감사를 (The Heart of This License)
