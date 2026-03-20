@@ -112,6 +112,11 @@ sme-web-service/
 
 **총 비용: 무료**
 
+## 문의
+
+contact@paranduru.me
+
 ## 라이선스
 
-MIT License
+GM-Social License v1.0 — 자유롭게 사용하되, 출처를 밝히고 광명을 발견하세요.
+자세한 내용은 [LICENSE](LICENSE) 파일을 참고하세요.
