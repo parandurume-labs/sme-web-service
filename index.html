@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="나이스가이 광명 소하점 - 동네 미용실. 커트, 펌, 염색 등 다양한 헤어 서비스를 제공합니다.">
+  <title>나이스가이 광명 소하점</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#home" class="nav-logo" id="navLogo">나이스가이</a>
+      <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#home" class="nav-link">홈</a></li>
+        <li><a href="#services" class="nav-link">서비스</a></li>
+        <li><a href="#booking" class="nav-link">예약</a></li>
+        <li><a href="#location" class="nav-link">오시는 길</a></li>
+        <li><a href="#contact" class="nav-link">문의하기</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="home" class="hero">
+    <div class="hero-content">
+      <h1 id="heroTitle">나이스가이</h1>
+      <p class="hero-subtitle" id="heroSubtitle">광명 소하점</p>
+      <p class="hero-description" id="heroDescription">동네에서 만나는 편안한 스타일링. 당신의 멋을 완성해 드립니다.</p>
+      <div class="hero-buttons">
+        <a href="#booking" class="btn btn-primary">온라인 예약하기</a>
+        <a href="#contact" class="btn btn-outline btn-hero-outline">문의하기</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Section (JSON에서 동적 로드) -->
+  <section id="services" class="section">
+    <div class="container">
+      <h2 class="section-title">서비스 & 가격</h2>
+      <p class="section-subtitle">합리적인 가격으로 최고의 서비스를 제공합니다</p>
+      <div class="services-grid" id="servicesGrid">
+        <!-- data/services.json에서 동적으로 렌더링됩니다 -->
+      </div>
+      <p class="services-note">* 가격은 모발 길이 및 시술 내용에 따라 달라질 수 있습니다.</p>
+    </div>
+  </section>
+
+  <!-- Booking Section -->
+  <section id="booking" class="section section-alt">
+    <div class="container">
+      <h2 class="section-title">온라인 예약</h2>
+      <p class="section-subtitle">날짜와 서비스를 선택하면 빈 시간대가 표시됩니다</p>
+      <form id="bookingForm" class="booking-form">
+        <!-- Step 1: 날짜 선택 -->
+        <div class="booking-step">
+          <h3 class="step-title"><span class="step-number">1</span> 날짜 선택 <span class="required">*</span></h3>
+          <div class="form-group">
+            <label for="bookingDate">날짜</label>
+            <input type="date" id="bookingDate" name="date" required>
+          </div>
+        </div>
+
+        <!-- Step 2: 서비스 선택 -->
+        <div class="booking-step" id="bookingStep1">
+          <h3 class="step-title"><span class="step-number">2</span> 서비스 선택 <span class="required">*</span></h3>
+          <div class="service-select-grid" id="serviceSelectGrid">
+            <!-- data/services.json에서 동적으로 렌더링됩니다 -->
+          </div>
+          <input type="hidden" id="bookingService" name="service" required>
+          <p class="booking-duration" id="bookingDuration" hidden>
+            예상 소요시간: <strong id="durationText"></strong>
+          </p>
+        </div>
+
+        <!-- Step 3: 시간 선택 -->
+        <div class="booking-step">
+          <h3 class="step-title"><span class="step-number">3</span> 시간 선택 <span class="required">*</span></h3>
+          <div id="slotsLoading" class="slots-loading" hidden>빈 시간대를 조회하는 중...</div>
+          <div id="slotsMessage" class="slots-message" hidden>날짜와 서비스를 먼저 선택해 주세요.</div>
+          <div class="time-slots-grid" id="timeSlotsGrid" hidden>
+            <!-- 서버에서 빈 시간대를 동적으로 렌더링 -->
+          </div>
+          <input type="hidden" id="bookingTime" name="time" required>
+          <input type="hidden" id="bookingSeat" name="seat">
+        </div>
+
+        <!-- Step 4: 고객 정보 -->
+        <div class="booking-step">
+          <h3 class="step-title"><span class="step-number">4</span> 고객 정보</h3>
+          <div class="form-group">
+            <label for="bookingName">이름 <span class="required">*</span></label>
+            <input type="text" id="bookingName" name="name" required placeholder="홍길동" autocomplete="name">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bookingPhone">연락처 <span class="required">*</span></label>
+              <input type="tel" id="bookingPhone" name="phone" required placeholder="010-1234-5678" autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label for="bookingEmail">이메일</label>
+              <input type="email" id="bookingEmail" name="email" placeholder="example@email.com" autocomplete="email">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="bookingMemo">요청사항</label>
+            <textarea id="bookingMemo" name="memo" rows="3" placeholder="원하시는 스타일이나 요청사항을 적어 주세요"></textarea>
+          </div>
+        </div>
+
+        <!-- 개인정보 수집·이용 동의 -->
+        <div class="form-group privacy-consent">
+          <div class="privacy-box">
+            <h4>개인정보 수집·이용 동의</h4>
+            <div class="privacy-text">
+              <p><strong>1. 수집 항목:</strong> 이름, 연락처, 이메일, 예약 서비스, 예약 일시, 요청사항</p>
+              <p><strong>2. 수집 목적:</strong> 헤어 서비스 예약 접수 및 관리, 예약 확인 연락</p>
+              <p><strong>3. 보유 기간:</strong> 예약 서비스 완료 후 1년간 보관 후 파기</p>
+              <p><strong>4. 동의 거부 권리:</strong> 동의를 거부하실 수 있으며, 거부 시 온라인 예약이 제한됩니다. 전화 예약은 가능합니다.</p>
+              <p>수집된 개인정보는 위 목적 이외의 용도로 사용되지 않으며, 관련 법령에 따라 안전하게 관리됩니다.</p>
+            </div>
+          </div>
+          <label class="checkbox-label">
+            <input type="checkbox" id="bookingPrivacyConsent" required>
+            <span>개인정보 수집·이용에 동의합니다. <span class="required">*</span></span>
+          </label>
+        </div>
+
+        <!-- reCAPTCHA -->
+        <div class="form-group recaptcha-group">
+          <div class="g-recaptcha" data-sitekey="6Le4rpAsAAAAAOPdww9MUb9TzENUTZTdU9IYkLr7" id="bookingRecaptcha"></div>
+          <p class="recaptcha-note">스팸 방지를 위해 위 확인을 완료해 주세요.</p>
+        </div>
+
+        <!-- 예약 요약 -->
+        <div class="booking-summary" id="bookingSummary" hidden>
+          <h4>예약 요약</h4>
+          <div id="summaryContent"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">예약 신청하기</button>
+      </form>
+      <div id="bookingResult" class="form-result" hidden></div>
+    </div>
+  </section>
+
+  <!-- Location Section -->
+  <section id="location" class="section section-alt">
+    <div class="container">
+      <h2 class="section-title">오시는 길</h2>
+      <p class="section-subtitle">편하게 방문해 주세요</p>
+      <div class="location-grid">
+        <div class="map-container">
+          <iframe
+            id="mapIframe"
+            src=""
+            width="100%"
+            height="400"
+            style="border:0;"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title="지도">
+          </iframe>
+        </div>
+        <div class="location-info">
+          <div class="info-item">
+            <h3>&#128205; 주소</h3>
+            <p><span id="locationAddress"></span><br><span class="placeholder" id="locationAddressDetail"></span></p>
+          </div>
+          <div class="info-item">
+            <h3>&#128222; 전화</h3>
+            <p><a href="#" id="locationPhoneLink" class="info-link"><span id="locationPhone"></span></a></p>
+          </div>
+          <div class="info-item">
+            <h3>&#128336; 영업시간</h3>
+            <ul class="hours-list">
+              <li><span>평일</span><span id="hoursWeekday"></span></li>
+              <li><span>토요일</span><span id="hoursSaturday"></span></li>
+              <li><span>일요일</span><span id="hoursSunday"></span></li>
+            </ul>
+          </div>
+          <a href="#" id="mapsLink" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
+            Google Maps에서 보기
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="section">
+    <div class="container">
+      <h2 class="section-title">문의하기</h2>
+      <p class="section-subtitle">궁금한 점이 있으시면 편하게 문의해 주세요</p>
+      <form id="contactForm" class="contact-form">
+        <div class="form-group">
+          <label for="name">이름 <span class="required">*</span></label>
+          <input type="text" id="name" name="name" required placeholder="홍길동" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="phone">연락처</label>
+          <input type="tel" id="phone" name="phone" placeholder="010-1234-5678" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label for="email">이메일</label>
+          <input type="email" id="email" name="email" placeholder="example@email.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="message">문의 내용 <span class="required">*</span></label>
+          <textarea id="message" name="message" rows="5" required placeholder="문의하실 내용을 입력해 주세요"></textarea>
+        </div>
+
+        <!-- 개인정보 수집·이용 동의 -->
+        <div class="form-group privacy-consent">
+          <div class="privacy-box">
+            <h4>개인정보 수집·이용 동의</h4>
+            <div class="privacy-text">
+              <p><strong>1. 수집 항목:</strong> 이름, 연락처, 이메일, 문의 내용</p>
+              <p><strong>2. 수집 목적:</strong> 고객 문의 접수 및 답변, 예약 상담</p>
+              <p><strong>3. 보유 기간:</strong> 문의 처리 완료 후 1년간 보관 후 파기</p>
+              <p><strong>4. 동의 거부 권리:</strong> 동의를 거부하실 수 있으며, 거부 시 문의 접수가 제한됩니다.</p>
+              <p>수집된 개인정보는 위 목적 이외의 용도로 사용되지 않으며, 관련 법령에 따라 안전하게 관리됩니다.</p>
+            </div>
+          </div>
+          <label class="checkbox-label">
+            <input type="checkbox" id="privacyConsent" required>
+            <span>개인정보 수집·이용에 동의합니다. <span class="required">*</span></span>
+          </label>
+        </div>
+
+        <!-- reCAPTCHA -->
+        <div class="form-group recaptcha-group">
+          <!-- TODO: 아래 data-sitekey를 본인의 reCAPTCHA v2 사이트 키로 교체하세요 -->
+          <div class="g-recaptcha" data-sitekey="6Le4rpAsAAAAAOPdww9MUb9TzENUTZTdU9IYkLr7"></div>
+          <p class="recaptcha-note">스팸 방지를 위해 위 확인을 완료해 주세요.</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">문의 보내기</button>
+      </form>
+      <div id="formResult" class="form-result" hidden></div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p class="footer-name" id="footerName">나이스가이 광명 소하점</p>
+      <p class="footer-copy">&copy; <span id="footerYear">2026</span> <span id="footerShortName">나이스가이</span>. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

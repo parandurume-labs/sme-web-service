@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나이스가이 관리자</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #f5f1ec; color: #333; min-height: 100vh; }
+
+    /* Login */
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { background: #fff; padding: 48px 40px; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); text-align: center; max-width: 400px; width: 90%; }
+    .login-box h1 { font-size: 1.5rem; color: #5a4a3a; margin-bottom: 8px; }
+    .login-box p { color: #888; font-size: 0.9rem; margin-bottom: 24px; }
+    .login-box input { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; font-family: inherit; margin-bottom: 16px; }
+    .login-box input:focus { outline: none; border-color: #c9a96e; box-shadow: 0 0 0 3px rgba(201,169,110,0.15); }
+    .login-box button { width: 100%; padding: 14px; background: #5a4a3a; color: #fff; border: none; border-radius: 50px; font-size: 1rem; font-family: inherit; cursor: pointer; font-weight: 500; }
+    .login-box button:hover { background: #7a6a5a; }
+    .login-error { color: #c0392b; font-size: 0.85rem; margin-top: 8px; display: none; }
+
+    /* Dashboard */
+    .dashboard { display: none; }
+    .header { background: #5a4a3a; color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 1.2rem; font-weight: 600; }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-sm { padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: #fff; font-size: 0.85rem; cursor: pointer; font-family: inherit; }
+    .btn-sm:hover { background: rgba(255,255,255,0.1); }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .stat-number { font-size: 2rem; font-weight: 700; color: #5a4a3a; }
+    .stat-label { font-size: 0.85rem; color: #888; margin-top: 4px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 0; padding: 0 24px; border-bottom: 1px solid #e0d8cf; }
+    .tab { padding: 14px 24px; cursor: pointer; font-size: 0.95rem; font-weight: 500; color: #888; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tab:hover { color: #5a4a3a; }
+    .tab.active { color: #5a4a3a; border-bottom-color: #c9a96e; }
+
+    /* Table */
+    .table-container { padding: 24px; }
+    .data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .data-table th { background: #faf7f2; padding: 12px 16px; text-align: left; font-size: 0.85rem; font-weight: 600; color: #5a4a3a; white-space: nowrap; }
+    .data-table td { padding: 12px 16px; font-size: 0.9rem; border-top: 1px solid #f0ebe4; color: #555; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .data-table tr:hover td { background: #faf7f2; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #aaa; font-size: 0.95rem; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 60px; color: #888; }
+    .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #e0d8cf; border-top-color: #c9a96e; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .table-container { padding: 16px; overflow-x: auto; }
+      .data-table { min-width: 600px; }
+      .tabs { overflow-x: auto; }
+    }
+    @media (max-width: 480px) {
+      .stats { grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+      .stat-card { padding: 14px; }
+      .stat-number { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <h1>나이스가이 관리자</h1>
+      <p>관리자 키를 입력하세요</p>
+      <form id="loginForm">
+        <input type="password" id="adminKey" placeholder="관리자 키" required autocomplete="current-password">
+        <button type="submit">로그인</button>
+      </form>
+      <p class="login-error" id="loginError">인증에 실패했습니다. 키를 확인해 주세요.</p>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard">
+    <div class="header">
+      <h1>나이스가이 관리자</h1>
+      <div class="header-actions">
+        <button class="btn-sm" id="refreshBtn">새로고침</button>
+        <button class="btn-sm" id="logoutBtn">로그아웃</button>
+      </div>
+    </div>
+
+    <div class="stats" id="statsArea">
+      <div class="stat-card">
+        <div class="stat-number" id="statTotalBookings">-</div>
+        <div class="stat-label">전체 예약</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statTodayBookings">-</div>
+        <div class="stat-label">오늘 예약</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statTotalContacts">-</div>
+        <div class="stat-label">전체 문의</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="statTodayContacts">-</div>
+        <div class="stat-label">오늘 문의</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="bookings">예약 내역</div>
+      <div class="tab" data-tab="contacts">문의 내역</div>
+    </div>
+
+    <div class="table-container">
+      <div id="tableLoading" class="loading">
+        <div class="spinner"></div>
+        <p>데이터를 불러오는 중...</p>
+      </div>
+      <div id="tableArea"></div>
+    </div>
+  </div>
+
+  <script>
+    // Config — same web app URL
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxNdzWUmq0DHWcVmSPI8eumYXMUvtWzSLctFW627XNEFrNB_2GaRB1lvB1PfSgo6a4wCA/exec';
+
+    let adminKey = '';
+    let cachedData = { contacts: [], bookings: [] };
+    let activeTab = 'bookings';
+
+    // ===== Login =====
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      adminKey = document.getElementById('adminKey').value.trim();
+      if (!adminKey) return;
+
+      try {
+        const success = await fetchData();
+        if (success) {
+          sessionStorage.setItem('adminKey', adminKey);
+          document.getElementById('loginScreen').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          renderDashboard();
+        } else {
+          document.getElementById('loginError').style.display = 'block';
+        }
+      } catch {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    });
+
+    // Auto-login from session
+    const savedKey = sessionStorage.getItem('adminKey');
+    if (savedKey) {
+      adminKey = savedKey;
+      fetchData().then(success => {
+        if (success) {
+          document.getElementById('loginScreen').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          renderDashboard();
+        }
+      });
+    }
+
+    // ===== Fetch Data =====
+    async function fetchData() {
+      const url = API_URL + '?action=getData&sheet=all&key=' + encodeURIComponent(adminKey);
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        if (result.status === 'ok') {
+          cachedData.contacts = result.contacts || [];
+          cachedData.bookings = result.bookings || [];
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    }
+
+    // ===== Render =====
+    function renderDashboard() {
+      updateStats();
+      renderTable();
+    }
+
+    function updateStats() {
+      const now = new Date();
+      const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      const todayKR = now.toLocaleDateString('ko-KR');
+
+      document.getElementById('statTotalBookings').textContent = cachedData.bookings.length;
+      document.getElementById('statTotalContacts').textContent = cachedData.contacts.length;
+
+      const todayBookings = cachedData.bookings.filter(b => {
+        const d = String(b['예약날짜'] || b['예약일시'] || '');
+        return d.includes(todayStr) || d.includes(todayKR);
+      });
+      document.getElementById('statTodayBookings').textContent = todayBookings.length;
+
+      const todayContacts = cachedData.contacts.filter(c => {
+        const d = String(c['접수일시'] || '');
+        return d.includes(todayStr) || d.includes(todayKR);
+      });
+      document.getElementById('statTodayContacts').textContent = todayContacts.length;
+
+      document.getElementById('tableLoading').style.display = 'none';
+    }
+
+    function renderTable() {
+      const area = document.getElementById('tableArea');
+
+      if (activeTab === 'bookings') {
+        if (cachedData.bookings.length === 0) {
+          area.innerHTML = '<div class="empty-state">예약 내역이 없습니다.</div>';
+          return;
+        }
+        area.innerHTML = buildTable(cachedData.bookings, [
+          { key: '예약날짜', label: '예약일' },
+          { key: '예약시간', label: '시간' },
+          { key: '서비스', label: '서비스' },
+          { key: '가격', label: '가격' },
+          { key: '좌석', label: '좌석' },
+          { key: '고객명', label: '고객명' },
+          { key: '연락처', label: '연락처' },
+          { key: '이메일', label: '이메일' },
+          { key: '요청사항', label: '요청사항' },
+          { key: '상태', label: '상태' },
+          { key: '예약일시', label: '접수일시' }
+        ]);
+      } else {
+        if (cachedData.contacts.length === 0) {
+          area.innerHTML = '<div class="empty-state">문의 내역이 없습니다.</div>';
+          return;
+        }
+        area.innerHTML = buildTable(cachedData.contacts, [
+          { key: '접수일시', label: '접수일시' },
+          { key: '이름', label: '이름' },
+          { key: '연락처', label: '연락처' },
+          { key: '이메일', label: '이메일' },
+          { key: '문의내용', label: '문의 내용' }
+        ]);
+      }
+    }
+
+    function buildTable(data, columns) {
+      let html = '<table class="data-table"><thead><tr>';
+      html += '<th>#</th>';
+      columns.forEach(col => { html += '<th>' + esc(col.label) + '</th>'; });
+      html += '</tr></thead><tbody>';
+
+      data.forEach((row, i) => {
+        html += '<tr>';
+        html += '<td>' + (i + 1) + '</td>';
+        columns.forEach(col => {
+          const raw = row[col.key] || '-';
+          const display = formatValue(raw, col.key);
+          html += '<td title="' + esc(display) + '">' + esc(display) + '</td>';
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table>';
+      return html;
+    }
+
+    // ===== Date/Time Formatting =====
+    function formatValue(val, key) {
+      if (!val || val === '-') return '-';
+      const s = String(val);
+
+      // ISO date with T → 날짜 포맷
+      if (s.match(/^\d{4}-\d{2}-\d{2}T/)) {
+        const d = new Date(s);
+        if (isNaN(d.getTime())) return s;
+
+        // 1899년 = Sheets의 시간 전용 값
+        if (d.getFullYear() < 1900) {
+          return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+        }
+
+        // 날짜+시간 포함 여부
+        const hasTime = d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0;
+        if (key === '예약날짜' || !hasTime) {
+          return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', timeZone: 'Asia/Seoul' });
+        }
+        return d.toLocaleString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Seoul' });
+      }
+
+      return s;
+    }
+
+    function esc(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ===== Tab Switching =====
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeTab = tab.dataset.tab;
+        renderTable();
+      });
+    });
+
+    // ===== Refresh =====
+    document.getElementById('refreshBtn').addEventListener('click', async () => {
+      document.getElementById('tableLoading').style.display = 'block';
+      document.getElementById('tableArea').innerHTML = '';
+      await fetchData();
+      renderDashboard();
+    });
+
+    // ===== Logout =====
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('adminKey');
+      adminKey = '';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('adminKey').value = '';
+      document.getElementById('loginError').style.display = 'none';
+    });
+  </script>
+</body>
+</html>

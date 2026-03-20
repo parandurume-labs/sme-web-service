@@ -1,0 +1,12 @@
+.env
+.DS_Store
+Thumbs.db
+*.log
+.claude/
+.clasp.json
+.clasprc.json
+.claspignore
+appsscript.json
+ARCHITECTURE.md
+SETUP-GUIDE.md
+SKILL-PATCH.md
