@@ -847,3 +847,12 @@ img {
     padding: 24px 20px;
   }
 }
+
+/* 봇 차단용 허니팟 칸 — 화면에서 숨김 */
+.hp-field {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

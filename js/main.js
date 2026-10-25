@@ -90,7 +90,7 @@ function renderServiceCards(services) {
   if (!grid) return;
   grid.innerHTML = services.map(function(s) {
     return '<div class="service-card">'
-      + '<div class="service-icon">' + s.icon + '</div>'
+      + '<div class="service-icon">' + escapeHtml(s.icon) + '</div>'
       + '<h3>' + escapeHtml(s.name) + '</h3>'
       + '<p class="service-price">' + escapeHtml(s.price) + '</p>'
       + '<p class="service-desc">' + escapeHtml(s.description) + '</p>'
@@ -102,11 +102,11 @@ function renderServiceSelectCards(services) {
   var grid = document.getElementById('serviceSelectGrid');
   if (!grid) return;
   grid.innerHTML = services.map(function(s) {
-    return '<div class="service-select-card" data-service-id="' + s.id + '" data-duration="' + s.duration + '">'
-      + '<div class="service-icon">' + s.icon + '</div>'
+    return '<div class="service-select-card" data-service-id="' + escapeHtml(s.id) + '" data-duration="' + Number(s.duration) + '">'
+      + '<div class="service-icon">' + escapeHtml(s.icon) + '</div>'
       + '<h4>' + escapeHtml(s.name) + '</h4>'
       + '<p class="service-price">' + escapeHtml(s.price) + '</p>'
-      + '<p class="service-duration">약 ' + s.duration + '분</p>'
+      + '<p class="service-duration">약 ' + Number(s.duration) + '분</p>'
       + '</div>';
   }).join('');
 
@@ -168,13 +168,17 @@ function initNav() {
 }
 
 // ===== Booking Date =====
+function parseLocalDate(dateStr) {
+  return new Date(dateStr + 'T00:00:00+09:00');
+}
+
 function initBookingDate() {
   var dateInput = document.getElementById('bookingDate');
   if (!dateInput) return;
-  var today = new Date();
-  var yyyy = today.getFullYear();
-  var mm = String(today.getMonth() + 1).padStart(2, '0');
-  var dd = String(today.getDate()).padStart(2, '0');
+  var nowKst = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  var yyyy = nowKst.getFullYear();
+  var mm = String(nowKst.getMonth() + 1).padStart(2, '0');
+  var dd = String(nowKst.getDate()).padStart(2, '0');
   dateInput.min = yyyy + '-' + mm + '-' + dd;
   dateInput.addEventListener('change', function() {
     document.getElementById('bookingTime').value = '';
@@ -209,10 +213,7 @@ async function fetchAvailableSlots() {
   var requestId = ++currentSlotRequest;
 
   try {
-    var apiUrl = getApiUrl();
-    var url = apiUrl + '?action=getSlots&date=' + date + '&service=' + serviceId;
-    var response = await fetch(url);
-    var result = await response.json();
+    var result = await callApi({ action: 'getSlots', date: date, service: serviceId });
 
     if (requestId !== currentSlotRequest) return;
     slotsLoading.hidden = true;
@@ -284,8 +285,8 @@ function updateBookingSummary() {
   html += '<div class="summary-row"><span>소요시간</span><strong>약 ' + service.duration + '분</strong></div>';
 
   if (date) {
-    var dateObj = new Date(date);
-    var dateStr = dateObj.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+    var dateObj = parseLocalDate(date);
+    var dateStr = dateObj.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Seoul' });
     html += '<div class="summary-row"><span>날짜</span><strong>' + dateStr + '</strong></div>';
   }
 
@@ -297,12 +298,25 @@ function updateBookingSummary() {
   summaryEl.hidden = false;
 }
 
-// ===== API URL =====
+// ===== API =====
 function getApiUrl() {
-  if (config.api) {
-    return config.api.googleAppsScriptUrl || config.api.powerAutomateUrl || '';
-  }
-  return '';
+  return (config.api && config.api.googleAppsScriptUrl) || '';
+}
+
+// text/plain으로 보내야 브라우저 사전 요청(CORS preflight) 없이 Apps Script가 응답을 돌려줍니다
+async function callApi(payload) {
+  var response = await fetch(getApiUrl(), {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return response.json();
+}
+
+function getHoneypot(form) {
+  var field = form.querySelector('input[name="website"]');
+  return field ? field.value : '';
 }
 
 // ===== Contact Form =====
@@ -318,7 +332,7 @@ function initContactForm() {
       phone: document.getElementById('phone').value.trim(),
       email: document.getElementById('email').value.trim(),
       message: document.getElementById('message').value.trim(),
-      submittedAt: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+      website: getHoneypot(form),
       type: 'contact'
     };
 
@@ -374,7 +388,7 @@ function initBookingForm() {
       phone: document.getElementById('bookingPhone').value.trim(),
       email: document.getElementById('bookingEmail').value.trim(),
       memo: document.getElementById('bookingMemo').value.trim(),
-      submittedAt: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+      website: getHoneypot(form),
       type: 'booking'
     };
 
@@ -388,7 +402,7 @@ function initBookingForm() {
       return;
     }
 
-    if (new Date(formData.date).getDay() === 0) {
+    if (parseLocalDate(formData.date).getDay() === 0 && (config.business && config.business.hours && config.business.hours.sunday === '휴무')) {
       showResult(resultEl, '일요일은 휴무입니다. 다른 날짜를 선택해 주세요.', 'error');
       return;
     }
@@ -425,15 +439,18 @@ async function submitForm(url, data, form, resultEl, successMsg, recaptchaIndex)
   submitBtn.textContent = '보내는 중...';
 
   try {
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(data)
-    });
+    var result = await callApi(data);
 
-    showResult(resultEl, successMsg, 'success');
+    // 서버가 거절한 경우(좌석 마감, 스팸 방지 실패, 입력 오류 등) 그 이유를 그대로 보여 줌
+    if (!result || result.status !== 'ok') {
+      showResult(resultEl, (result && result.message) || '접수에 실패했습니다. 잠시 후 다시 시도해 주세요.', 'error');
+      resetRecaptcha(recaptchaIndex);
+      if (data.type === 'booking') fetchAvailableSlots();
+      return;
+    }
+
+    var finalMsg = (result.bookingId ? '[예약번호: ' + result.bookingId + '] ' : '') + successMsg;
+    showResult(resultEl, finalMsg, 'success');
     form.reset();
     var selectedCard = document.querySelector('.service-select-card.selected');
     if (selectedCard) selectedCard.classList.remove('selected');

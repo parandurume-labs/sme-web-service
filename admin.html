@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>나이스가이 관리자</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +24,7 @@
     .login-box button { width: 100%; padding: 14px; background: #5a4a3a; color: #fff; border: none; border-radius: 50px; font-size: 1rem; font-family: inherit; cursor: pointer; font-weight: 500; }
     .login-box button:hover { background: #7a6a5a; }
     .login-error { color: #c0392b; font-size: 0.85rem; margin-top: 8px; display: none; }
+    .login-note { color: #aaa; font-size: 0.78rem; margin-top: 20px; margin-bottom: 0; line-height: 1.6; }
 
     /* Dashboard */
     .dashboard { display: none; }
@@ -48,6 +52,14 @@
     .data-table th { background: #faf7f2; padding: 12px 16px; text-align: left; font-size: 0.85rem; font-weight: 600; color: #5a4a3a; white-space: nowrap; }
     .data-table td { padding: 12px 16px; font-size: 0.9rem; border-top: 1px solid #f0ebe4; color: #555; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .data-table tr:hover td { background: #faf7f2; }
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
+    .status-confirmed { background: #e8f5e9; color: #2e7d32; }
+    .status-cancelled { background: #fce4ec; color: #c62828; }
+    .status-completed { background: #eceff1; color: #546e7a; }
+    .btn-action { padding: 4px 10px; border-radius: 6px; border: 1px solid #d5cabd; background: #fff; color: #5a4a3a; font-size: 0.78rem; cursor: pointer; font-family: inherit; margin-right: 4px; }
+    .btn-action:hover { background: #f5f1ec; }
+    .btn-action.danger { border-color: #e6b0aa; color: #c0392b; }
+    .btn-action.danger:hover { background: #fdedec; }
     .empty-state { text-align: center; padding: 60px 20px; color: #aaa; font-size: 0.95rem; }
 
     /* Loading */
@@ -81,6 +93,7 @@
         <button type="submit">로그인</button>
       </form>
       <p class="login-error" id="loginError">인증에 실패했습니다. 키를 확인해 주세요.</p>
+      <p class="login-note">공용 PC에서는 사용 후 꼭 로그아웃하세요.<br>30분 동안 사용하지 않으면 자동으로 로그아웃됩니다.</p>
     </div>
   </div>
 
@@ -89,6 +102,7 @@
     <div class="header">
       <h1>나이스가이 관리자</h1>
       <div class="header-actions">
+        <button class="btn-sm" id="maskBtn" aria-pressed="true">개인정보 보기</button>
         <button class="btn-sm" id="refreshBtn">새로고침</button>
         <button class="btn-sm" id="logoutBtn">로그아웃</button>
       </div>
@@ -128,12 +142,30 @@
   </div>
 
   <script>
-    // Config — same web app URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxNdzWUmq0DHWcVmSPI8eumYXMUvtWzSLctFW627XNEFrNB_2GaRB1lvB1PfSgo6a4wCA/exec';
+    // Config — data/config.json의 api.googleAppsScriptUrl을 사용
+    const FALLBACK_API_URL = '';
+    const IDLE_LOGOUT_MS = 30 * 60 * 1000;
 
+    let apiUrl = FALLBACK_API_URL;
     let adminKey = '';
     let cachedData = { contacts: [], bookings: [] };
     let activeTab = 'bookings';
+    let masked = true;
+    let idleTimer = null;
+
+    const configReady = fetch('data/config.json')
+      .then(r => r.json())
+      .then(cfg => {
+        const api = cfg.api || {};
+        if (api.googleAppsScriptUrl) apiUrl = api.googleAppsScriptUrl;
+        const biz = cfg.business || {};
+        if (biz.shortName || biz.name) {
+          const title = (biz.shortName || biz.name) + ' 관리자';
+          document.title = title;
+          document.querySelectorAll('.login-box h1, .header h1').forEach(el => { el.textContent = title; });
+        }
+      })
+      .catch(() => {});
 
     // ===== Login =====
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -141,48 +173,58 @@
       adminKey = document.getElementById('adminKey').value.trim();
       if (!adminKey) return;
 
-      try {
-        const success = await fetchData();
-        if (success) {
-          sessionStorage.setItem('adminKey', adminKey);
-          document.getElementById('loginScreen').style.display = 'none';
-          document.getElementById('dashboard').style.display = 'block';
-          renderDashboard();
-        } else {
-          document.getElementById('loginError').style.display = 'block';
-        }
-      } catch {
-        document.getElementById('loginError').style.display = 'block';
+      const errorEl = document.getElementById('loginError');
+      const result = await fetchData();
+      if (result.ok) {
+        sessionStorage.setItem('adminKey', adminKey);
+        showDashboard();
+      } else {
+        adminKey = '';
+        errorEl.textContent = result.message || '인증에 실패했습니다. 키를 확인해 주세요.';
+        errorEl.style.display = 'block';
       }
     });
+
+    function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      renderDashboard();
+      resetIdleTimer();
+    }
 
     // Auto-login from session
     const savedKey = sessionStorage.getItem('adminKey');
     if (savedKey) {
       adminKey = savedKey;
-      fetchData().then(success => {
-        if (success) {
-          document.getElementById('loginScreen').style.display = 'none';
-          document.getElementById('dashboard').style.display = 'block';
-          renderDashboard();
-        }
+      fetchData().then(result => {
+        if (result.ok) showDashboard();
+        else sessionStorage.removeItem('adminKey');
       });
     }
 
     // ===== Fetch Data =====
+    // 관리자 키는 주소(URL)가 아니라 요청 본문으로 보냅니다 — 브라우저 기록·서버 로그에 남지 않음
     async function fetchData() {
-      const url = API_URL + '?action=getData&sheet=all&key=' + encodeURIComponent(adminKey);
+      await configReady;
+      if (!apiUrl) {
+        return { ok: false, message: 'data/config.json에 googleAppsScriptUrl이 설정되지 않았습니다.' };
+      }
       try {
-        const response = await fetch(url);
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'getData', sheet: 'all', adminKey: adminKey })
+        });
         const result = await response.json();
         if (result.status === 'ok') {
           cachedData.contacts = result.contacts || [];
           cachedData.bookings = result.bookings || [];
-          return true;
+          return { ok: true };
         }
-        return false;
+        return { ok: false, message: result.message };
       } catch {
-        return false;
+        return { ok: false, message: '서버에 연결할 수 없습니다.' };
       }
     }
 
@@ -224,6 +266,7 @@
           return;
         }
         area.innerHTML = buildTable(cachedData.bookings, [
+          { key: '예약번호', label: '예약번호' },
           { key: '예약날짜', label: '예약일' },
           { key: '예약시간', label: '시간' },
           { key: '서비스', label: '서비스' },
@@ -234,8 +277,10 @@
           { key: '이메일', label: '이메일' },
           { key: '요청사항', label: '요청사항' },
           { key: '상태', label: '상태' },
-          { key: '예약일시', label: '접수일시' }
+          { key: '접수일시', label: '접수일시' },
+          { key: '_actions', label: '관리' }
         ]);
+        bindBookingActions(area);
       } else {
         if (cachedData.contacts.length === 0) {
           area.innerHTML = '<div class="empty-state">문의 내역이 없습니다.</div>';
@@ -261,8 +306,16 @@
         html += '<tr>';
         html += '<td>' + (i + 1) + '</td>';
         columns.forEach(col => {
-          const raw = row[col.key] || '-';
-          const display = formatValue(raw, col.key);
+          if (col.key === '_actions') {
+            html += '<td>' + renderBookingActionButtons(row) + '</td>';
+            return;
+          }
+          const raw = row[col.key] || (col.key === '접수일시' ? row['예약일시'] : '') || '-';
+          if (col.key === '상태') {
+            html += '<td>' + renderStatusBadge(String(raw)) + '</td>';
+            return;
+          }
+          const display = maskValue(formatValue(raw, col.key), col.key);
           html += '<td title="' + esc(display) + '">' + esc(display) + '</td>';
         });
         html += '</tr>';
@@ -270,6 +323,66 @@
 
       html += '</tbody></table>';
       return html;
+    }
+
+    function renderStatusBadge(status) {
+      const cls = status === '취소' ? 'status-cancelled' : (status === '완료' ? 'status-completed' : 'status-confirmed');
+      return '<span class="status-badge ' + cls + '">' + esc(status) + '</span>';
+    }
+
+    function renderBookingActionButtons(row) {
+      const currentStatus = String(row['상태'] || '확정');
+      const bookingId = esc(String(row['예약번호'] || ''));
+      const rowNum = Number(row._rowNumber || 0);
+      let btns = '';
+      if (currentStatus !== '완료') {
+        btns += '<button type="button" class="btn-action" data-booking-id="' + bookingId + '" data-row="' + rowNum + '" data-status="완료">완료</button>';
+      }
+      if (currentStatus !== '취소') {
+        btns += '<button type="button" class="btn-action danger" data-booking-id="' + bookingId + '" data-row="' + rowNum + '" data-status="취소">취소</button>';
+      } else {
+        btns += '<button type="button" class="btn-action" data-booking-id="' + bookingId + '" data-row="' + rowNum + '" data-status="확정">복구</button>';
+      }
+      return btns || '-';
+    }
+
+    function bindBookingActions(container) {
+      container.querySelectorAll('.btn-action').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const newStatus = btn.dataset.status;
+          const bookingId = btn.dataset.bookingId;
+          const rowNumber = Number(btn.dataset.row);
+          if (newStatus === '취소' && !confirm('이 예약을 취소하시겠습니까? (연동된 구글 캘린더 일정도 함께 삭제됩니다)')) {
+            return;
+          }
+          btn.disabled = true;
+          try {
+            const response = await fetch(apiUrl, {
+              method: 'POST',
+              redirect: 'follow',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({
+                action: 'updateBookingStatus',
+                adminKey: adminKey,
+                bookingId: bookingId,
+                rowNumber: rowNumber,
+                status: newStatus
+              })
+            });
+            const result = await response.json();
+            if (result.status === 'ok') {
+              await fetchData();
+              renderDashboard();
+            } else {
+              alert(result.message || '상태 변경에 실패했습니다.');
+              btn.disabled = false;
+            }
+          } catch {
+            alert('서버 통신 중 오류가 발생했습니다.');
+            btn.disabled = false;
+          }
+        });
+      });
     }
 
     // ===== Date/Time Formatting =====
@@ -298,6 +411,15 @@
       return s;
     }
 
+    // ===== 개인정보 가리기 (매장 화면을 손님이 볼 수 있을 때) =====
+    function maskValue(val, key) {
+      if (!masked || val === '-') return val;
+      if (key === '연락처') return val.replace(/(\d{2,3})[-\s]?(\d{3,4})[-\s]?(\d{4})/, (m, a, b, c) => a + '-****-' + c);
+      if (key === '이메일') return val.replace(/^(.).*?@/, '$1***@');
+      if (key === '고객명' || key === '이름') return val.length <= 1 ? val : val[0] + '*'.repeat(val.length - 1);
+      return val;
+    }
+
     function esc(text) {
       const div = document.createElement('div');
       div.textContent = text;
@@ -322,15 +444,36 @@
       renderDashboard();
     });
 
+    // ===== Mask Toggle =====
+    document.getElementById('maskBtn').addEventListener('click', (e) => {
+      masked = !masked;
+      e.target.textContent = masked ? '개인정보 보기' : '개인정보 가리기';
+      e.target.setAttribute('aria-pressed', String(masked));
+      renderTable();
+    });
+
     // ===== Logout =====
-    document.getElementById('logoutBtn').addEventListener('click', () => {
+    function logout() {
       sessionStorage.removeItem('adminKey');
       adminKey = '';
+      cachedData = { contacts: [], bookings: [] };
+      clearTimeout(idleTimer);
+      document.getElementById('tableArea').innerHTML = '';
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'flex';
       document.getElementById('adminKey').value = '';
       document.getElementById('loginError').style.display = 'none';
-    });
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    // ===== Idle Auto-Logout =====
+    function resetIdleTimer() {
+      if (!adminKey) return;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(logout, IDLE_LOGOUT_MS);
+    }
+    ['click', 'keydown', 'scroll', 'touchstart'].forEach(evt => document.addEventListener(evt, resetIdleTimer, { passive: true }));
   </script>
 </body>
 </html>

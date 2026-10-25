@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="나이스가이 광명 소하점 - 동네 미용실. 커트, 펌, 염색 등 다양한 헤어 서비스를 제공합니다.">
+  <!-- 보안: 이 페이지가 불러올 수 있는 외부 주소를 제한합니다 (백엔드 주소를 바꾸면 connect-src도 확인) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-src https://www.google.com/ https://recaptcha.google.com/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>나이스가이 광명 소하점</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -100,7 +103,7 @@
           <h3 class="step-title"><span class="step-number">4</span> 고객 정보</h3>
           <div class="form-group">
             <label for="bookingName">이름 <span class="required">*</span></label>
-            <input type="text" id="bookingName" name="name" required placeholder="홍길동" autocomplete="name">
+            <input type="text" id="bookingName" name="name" required maxlength="50" placeholder="홍길동" autocomplete="name">
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -114,7 +117,12 @@
           </div>
           <div class="form-group">
             <label for="bookingMemo">요청사항</label>
-            <textarea id="bookingMemo" name="memo" rows="3" placeholder="원하시는 스타일이나 요청사항을 적어 주세요"></textarea>
+            <textarea id="bookingMemo" name="memo" rows="3" maxlength="500" placeholder="원하시는 스타일이나 요청사항을 적어 주세요"></textarea>
+          </div>
+          <!-- 봇 차단용 칸 (사람에게는 보이지 않음 — 지우지 마세요) -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="bookingWebsite">웹사이트</label>
+            <input type="text" id="bookingWebsite" name="website" tabindex="-1" autocomplete="off">
           </div>
         </div>
 
@@ -127,6 +135,7 @@
               <p><strong>2. 수집 목적:</strong> 헤어 서비스 예약 접수 및 관리, 예약 확인 연락</p>
               <p><strong>3. 보유 기간:</strong> 예약 서비스 완료 후 1년간 보관 후 파기</p>
               <p><strong>4. 동의 거부 권리:</strong> 동의를 거부하실 수 있으며, 거부 시 온라인 예약이 제한됩니다. 전화 예약은 가능합니다.</p>
+              <p><strong>5. 보관 위치:</strong> 접수 내용은 Google(Google Sheets) 클라우드에 암호화되어 저장되며, 서버가 국외에 있을 수 있습니다.</p>
               <p>수집된 개인정보는 위 목적 이외의 용도로 사용되지 않으며, 관련 법령에 따라 안전하게 관리됩니다.</p>
             </div>
           </div>
@@ -206,7 +215,7 @@
       <form id="contactForm" class="contact-form">
         <div class="form-group">
           <label for="name">이름 <span class="required">*</span></label>
-          <input type="text" id="name" name="name" required placeholder="홍길동" autocomplete="name">
+          <input type="text" id="name" name="name" required maxlength="50" placeholder="홍길동" autocomplete="name">
         </div>
         <div class="form-group">
           <label for="phone">연락처</label>
@@ -218,7 +227,12 @@
         </div>
         <div class="form-group">
           <label for="message">문의 내용 <span class="required">*</span></label>
-          <textarea id="message" name="message" rows="5" required placeholder="문의하실 내용을 입력해 주세요"></textarea>
+          <textarea id="message" name="message" rows="5" required maxlength="2000" placeholder="문의하실 내용을 입력해 주세요"></textarea>
+        </div>
+        <!-- 봇 차단용 칸 (사람에게는 보이지 않음 — 지우지 마세요) -->
+        <div class="hp-field" aria-hidden="true">
+          <label for="contactWebsite">웹사이트</label>
+          <input type="text" id="contactWebsite" name="website" tabindex="-1" autocomplete="off">
         </div>
 
         <!-- 개인정보 수집·이용 동의 -->
@@ -230,6 +244,7 @@
               <p><strong>2. 수집 목적:</strong> 고객 문의 접수 및 답변, 예약 상담</p>
               <p><strong>3. 보유 기간:</strong> 문의 처리 완료 후 1년간 보관 후 파기</p>
               <p><strong>4. 동의 거부 권리:</strong> 동의를 거부하실 수 있으며, 거부 시 문의 접수가 제한됩니다.</p>
+              <p><strong>5. 보관 위치:</strong> 접수 내용은 Google(Google Sheets) 클라우드에 암호화되어 저장되며, 서버가 국외에 있을 수 있습니다.</p>
               <p>수집된 개인정보는 위 목적 이외의 용도로 사용되지 않으며, 관련 법령에 따라 안전하게 관리됩니다.</p>
             </div>
           </div>
